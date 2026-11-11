@@ -1,6 +1,6 @@
 ---
 name: latex-paper-writing
-description: A standardized workflow for writing academic papers in LaTeX, covering project layout, the shared preamble (packages, color theme, math macros), references, figures, and tables. AI-added BibTeX entries go only into bib/ai.bib, each annotated with its online source and a summary, never written from memory. Figures are plotted in figures/figures.ipynb at the template's exact physical width with LaTeX-rendered text and theme colors, with their plot data kept in figures/. Tables are fitted by editing content and spacing, with resizebox only as a last resort. Use whenever writing or editing a LaTeX paper, adding citations or .bib entries, or creating figures or tables for a paper.
+description: A standardized workflow for writing academic papers in LaTeX, covering project layout, the shared preamble (packages, color theme, math macros), references, figures, and tables. AI-added BibTeX entries go only into bib/ai.bib, each annotated with its online source and a summary, never written from memory. Figures are plotted in figures/figures.ipynb at the template's exact physical width with LaTeX-rendered text and theme colors, with unified font sizes and every plot's data saved as a TikZ-ready .csv file in figures/data/. Tables are fitted by editing content and spacing, with resizebox only as a last resort. Use whenever writing or editing a LaTeX paper, adding citations or .bib entries, or creating figures or tables for a paper.
 ---
 
 # LaTeX Paper Writing
@@ -18,10 +18,34 @@ paper/
 │   └── ai.bib            # entries added by AI only
 ├── figures/
 │   ├── figures.ipynb     # all plotting code
-│   ├── data/             # plotted values, one file per figure
+│   ├── <name>.tex        # one TikZ figure per file (e.g. teaser.tex), \input by main.tex
+│   ├── data/             # plotted values, one <name>.csv per figure
 │   └── <name>-crop.pdf   # cropped figures, included in the paper
 └── references/            # LaTeX sources of exemplar papers, read-only
 ```
+
+**Rule: all text stays in `main.tex`.** Never split sections (introduction, method, experiments, appendix, ...) into separate `.tex` files. The only `.tex` files besides `main.tex` are `preamble.tex` and one file per TikZ figure in `figures/`. (The rebuttal `response.tex` is a separate document, not part of the paper.)
+
+When a figure is split out, only its drawing goes into the figure file. The `figure` environment, `\centering`, `\caption`, and `\label` all stay in `main.tex`:
+
+```latex
+% main.tex
+\begin{figure}[t]
+  \centering
+  \input{figures/teaser}   % only the drawing
+  \caption{Overview of our method. ...}
+  \label{fig:teaser}
+\end{figure}
+```
+
+```latex
+% figures/teaser.tex: just the tikzpicture, no figure environment, caption, or label
+\begin{tikzpicture}
+  ...
+\end{tikzpicture}
+```
+
+Figures plotted in Python are not wrapped in a `.tex` file at all; `main.tex` includes their PDF directly with `\includegraphics`.
 
 `.gitignore` ignores all PDFs, so the compiled paper is never committed; the only exception is the cropped figures. It also ignores `references/`, because other authors' sources are not ours to redistribute:
 
@@ -61,10 +85,12 @@ All shared LaTeX setup lives in one file, `preamble.tex`: packages, the color th
 \usepackage{booktabs}
 \usepackage{makecell}   % line breaks inside table cells
 \usepackage{tikz}
+\usepackage{pgfplots}     % redraw figures from their .csv files
+\pgfplotsset{compat=1.18}
 \usepackage{gradbars}   % compact bars and sparklines in tables and text
 
 % ---- color theme (see Theme and Colors) ----
-\definecolor{metablue}{HTML}{0866FF}    % our method
+\definecolor{ourscolor}{HTML}{0866FF}   % our method
 % ...
 
 % ---- math notation ----
@@ -168,20 +194,22 @@ Do not add it, and do not cite a placeholder key. Tell the user which claim need
 
 ## Theme and Colors
 
-The whole paper follows one **color coding**: a single theme in which each color has one fixed meaning, applied everywhere. This covers plots, TikZ diagrams, the method overview figure, table highlights, and colored text. The figures in particular must look consistent: once readers learn that blue means our method, they can recognize it in every figure without checking the legend.
+The whole paper follows one **color coding**: a single theme in which each color has one fixed meaning, applied everywhere. This covers plots, TikZ diagrams, the method overview figure, table highlights, and colored text. The figures in particular must look consistent: once readers learn which color means our method, they can recognize it in every figure without checking the legend.
 
-- **Define once.** Define a small palette (4–6 colors) once in `preamble.tex` with `\definecolor`. This is the single source of truth.
-- **Fixed meanings.** Each color has one meaning everywhere, in every matplotlib plot, TikZ diagram, and table highlight. For example, `metablue` always marks our method (its curve, bars, dots, and diagram blocks); never switch it to another color, and never reuse it for anything else.
+- **Define once.** Define a small palette (4–6 colors) once in `preamble.tex` with `\definecolor`. This is the single source of truth. The colors themselves are free to choose; name each one by its meaning (e.g. `ourscolor`), not by its hue.
+- **Fixed meanings.** Each color has one meaning everywhere, in every matplotlib plot, TikZ diagram, and table highlight. For example, if one color marks our method's results, it marks them in every figure and table of the paper (curves, bars, dots, diagram blocks, highlighted numbers); never switch our method to another color, and never reuse that color for anything else.
 - **Restrained, not flashy.** Use few, muted colors. Draw most elements in neutral gray or black, and reserve the strong accent color for what matters, usually our method. Avoid rainbow palettes, saturated color mixes, gradients, and decorative color.
-- **No ad-hoc colors.** Do not use matplotlib's default color cycle or hard-coded hex values. matplotlib reads the palette from `preamble.tex` (see the first cell below), and TikZ uses the names directly (`\draw[metablue]`).
+- **No ad-hoc colors.** Do not use matplotlib's default color cycle or hard-coded hex values. matplotlib reads the palette from `preamble.tex` (see the first cell below), and TikZ uses the names directly (`\draw[ourscolor]`).
 - **Readable without color.** Pick colors that stay distinguishable for color-blind readers and in grayscale print. Also vary markers or line styles, so meaning never relies on color alone.
 
 ```latex
 % ---- color theme in preamble.tex: one fixed meaning per color, used everywhere ----
-\definecolor{metablue}{HTML}{0866FF}    % our method
-\definecolor{metagray}{HTML}{8C8C8C}    % baselines
-\definecolor{metaorange}{HTML}{E8710A}  % strongest competitor / highlight
-\definecolor{metagreen}{HTML}{1E8E3E}   % ablation variants
+% example values; pick your own, but keep each meaning fixed
+\definecolor{ourscolor}{HTML}{0866FF}       % our method
+\definecolor{basecolor}{HTML}{8C8C8C}       % baselines
+\definecolor{highlightcolor}{HTML}{E8710A}  % strongest competitor / highlight
+\definecolor{ablationcolor}{HTML}{1E8E3E}   % ablation variants
+\definecolor{revcolor}{HTML}{0000FF}        % revised text (see Submission and Revision)
 ```
 
 ## Figures
@@ -189,11 +217,15 @@ The whole paper follows one **color coding**: a single theme in which each color
 **Rules:**
 
 - All figure files live in `figures/`.
+- **One figure, one file, at most two layers.** This applies to every figure, not just the teaser. Each TikZ figure (diagram, teaser, pgfplots plot) is one file, `figures/<name>.tex`, containing only the `tikzpicture`, and `main.tex` simply `\input`s it inside a `figure` environment that keeps the caption and label (see Project Layout). Never nest deeper:
+  - a figure file must not `\input` or `\include` further `.tex` files;
+  - do not put a `tikzpicture` inside a node of another `tikzpicture`; use `scope` or `pic` instead.
 - If figures are plotted with Python, all plotting code goes in a single notebook, `figures/figures.ipynb`.
 - Its first cell sets the fonts, renders all text with LaTeX, and defines the physical figure widths.
-- The data each figure plots also lives in `figures/`, as small, human-editable files (e.g. `figures/data/<name>.csv`) that the notebook reads, so values can be changed at any time without rerunning experiments.
-  - This means the final evaluated numbers the plot draws: point and curve coordinates, bar heights, metrics.
-  - It does not mean raw data or model outputs. For face recognition, store the evaluated accuracy per setting, not every per-sample prediction.
+- **Every data figure has a `.csv` file.** Bar plots, curve plots, scatter plots, heat maps, and any other figure drawn from numbers save their original plotted values to `figures/data/<name>.csv`, whichever tool draws them (Python, MATLAB, R, gnuplot, a spreadsheet, ...). The file must be enough to redraw the figure in LaTeX with TikZ/pgfplots, without the original program (see Plot Data Files).
+  - The plotting code reads this file, so values can be changed at any time without rerunning experiments.
+  - This means the final evaluated numbers the plot draws, as evaluated and not rounded for display: point and curve coordinates, bar heights, heat map cells, metrics.
+  - It does not mean experiment logs or model outputs. For face recognition, store the evaluated accuracy per setting, not every per-sample prediction.
 - Font sizes are only meaningful once the physical width is fixed. So each figure uses the exact width it will occupy on the page, and is included in LaTeX without scaling.
 
 **Measure the widths from the paper's template.** Never assume them; they differ between templates. Put this after `\begin{document}`, compile, and read the values from the log:
@@ -211,6 +243,7 @@ import re
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 # ---- color theme: read from preamble.tex, the single source of truth ----
@@ -220,29 +253,30 @@ COLORS = {
         r"\\definecolor\{(\w+)\}\{HTML\}\{([0-9A-Fa-f]{6})\}",
         Path("../preamble.tex").read_text(),
     )
-}  # usage: ax.plot(x, y, color=COLORS["metablue"], label="Ours")
+}  # usage: ax.plot(x, y, color=COLORS["ourscolor"], label="Ours")
 
 # ---- CVPR two-column layout (measured from the compiled paper) ----
 # \columnwidth = 237.13594pt, \textwidth = 496.85625pt; 1in = 72.27 TeX pt
 COLUMN_WIDTH = 237.13594 / 72.27   # 3.281 in, single-column figure
 TEXT_WIDTH = 496.85625 / 72.27     # 6.875 in, full-width figure*
-# body text is 10pt, captions \small = 9pt, \footnotesize = 8pt
-FONTSIZE = 8
+# unified font sizes (see Font Sizes); CVPR body text is 10pt
+FONTSIZE = 10         # axis labels and titles: the paper's body size
+SMALL_FONTSIZE = 9    # tick labels and legends: one point smaller
 
 plt.rcParams.update({
     "text.usetex": True,
     "font.family": "serif",
     # match the paper's fonts (CVPR uses Times)
     "text.latex.preamble": r"\usepackage{amsmath}\usepackage{newtxtext,newtxmath}",
-    # every text element uses FONTSIZE
+    # every text element uses one of the two sizes
     "font.size": FONTSIZE,
     "axes.labelsize": FONTSIZE,
     "axes.titlesize": FONTSIZE,
-    "xtick.labelsize": FONTSIZE,
-    "ytick.labelsize": FONTSIZE,
-    "legend.fontsize": FONTSIZE,
-    "legend.title_fontsize": FONTSIZE,
     "figure.titlesize": FONTSIZE,
+    "xtick.labelsize": SMALL_FONTSIZE,
+    "ytick.labelsize": SMALL_FONTSIZE,
+    "legend.fontsize": SMALL_FONTSIZE,
+    "legend.title_fontsize": SMALL_FONTSIZE,
     # keep the figure exactly at its figsize when saved (no tight bbox cropping)
     "figure.constrained_layout.use": True,
     "savefig.bbox": None,
@@ -251,7 +285,7 @@ plt.rcParams.update({
 
 **For each figure:**
 
-1. Use one cell per figure. It loads that figure's data from `data/<name>.csv` and uses `figsize=(COLUMN_WIDTH, h)` for a single-column `figure` or `(TEXT_WIDTH, h)` for a full-width `figure*`.
+1. Use one cell per figure. It loads that figure's data with `pd.read_csv("data/<name>.csv")` and uses `figsize=(COLUMN_WIDTH, h)` for a single-column `figure` or `(TEXT_WIDTH, h)` for a full-width `figure*`.
 2. End the cell by saving it as vector PDF next to the notebook and cropping the white margins automatically:
 
    ```python
@@ -262,7 +296,93 @@ plt.rcParams.update({
    ```
 
    `pdfcrop` writes `bar-crop.pdf`. This cropped file is the one that is committed and included; `bar.pdf` is an ignored intermediate.
-3. Include it at that width. Cropping removes only a thin margin, so the scale stays close to 1 and fonts print at about `FONTSIZE`: `\includegraphics[width=\columnwidth]{figures/<name>-crop.pdf}` (or `\textwidth`).
+3. Include it at that width. Cropping removes only a thin margin, so the scale stays close to 1 and fonts print at about their set sizes: `\includegraphics[width=\columnwidth]{figures/<name>-crop.pdf}` (or `\textwidth`).
+
+### Teaser Figure
+
+The teaser illustrates the overall framework and pipeline of the method.
+
+1. **Read the paper first.** Read the abstract, introduction, and method section, and the code if there is any, to understand the method's pipeline.
+2. **Draw the pipeline with TikZ.**
+   - Write it in `figures/teaser.tex` and `\input{figures/teaser}` in `main.tex`, following the one-file, two-layer rule in Figures.
+   - Load TikZ libraries in `preamble.tex`, use the theme color names, and write math with the macros from `preamble.tex`.
+   - Size it to `\columnwidth` or `\textwidth` through node and picture dimensions, not `\resizebox` or `scale`, which change the font size.
+   - Place example images with `\node {\includegraphics[...]{...}};`.
+3. **Fonts.** Use the document's font style and body size; do not use size commands such as `\tiny`, `\footnotesize`, or `\large`. The only exception: key concepts and subfigure titles may be larger and bold, e.g. `\large\bfseries`.
+
+### Font Sizes
+
+**Rule:** text in every figure matches the paper, using exactly two sizes. Font size is relative to figure size, so an oversized figure shrinks its text once it is placed on the page, however large the font values are.
+
+1. **Set the figure width first.** It must equal the figure's final width in the document (see the measured `COLUMN_WIDTH` and `TEXT_WIDTH` above).
+2. **Then set the two sizes globally,** based on the paper's body font size:
+
+   | Text element | Size | For a 10pt paper | matplotlib keys |
+   |---|---|---|---|
+   | Default text, axis labels, titles | body size | 10 | `font.size`, `axes.labelsize`, `axes.titlesize`, `figure.titlesize` |
+   | Tick labels, legends | one point smaller | 9 | `xtick.labelsize`, `ytick.labelsize`, `legend.fontsize`, `legend.title_fontsize` |
+
+- **Set sizes in one place.** In matplotlib, use the `rcParams` in the first cell. Do not pass `fontsize=` to individual calls, so all figures stay identical.
+- **Same sizes in every tool.** A figure from MATLAB, R, or anything else uses the same physical width and the same two sizes.
+- **Never fix text size by scaling the figure in LaTeX.** Change the figure size or the two constants instead.
+
+### Plot Data Files
+
+**Format of `figures/data/<name>.csv`,** so that pgfplots can read it directly:
+
+- Plain text, columns separated by commas, one header row of column names.
+- Column names and category labels use only letters, digits, and hyphens (e.g. `ViT-B`). pgfplots does not understand CSV quoting, so a comma inside a label splits the column, and LaTeX special characters such as `_` break in TikZ.
+- Write missing values as `nan`.
+- Heat maps use long format, one cell per row: `x,y,value`, ordered row by row.
+
+`figures/data/loss.csv` (curve or scatter):
+
+```text
+epoch,ours,baseline
+1,0.91,1.02
+2,0.62,0.84
+3,0.47,0.73
+```
+
+`figures/data/acc.csv` (bar):
+
+```text
+method,acc
+ResNet,76.1
+ViT-B,81.3
+Ours,84.2
+```
+
+**Saving from Python** (other tools write the same format):
+
+```python
+df = pd.DataFrame({"epoch": epochs, "ours": ours, "baseline": baseline})
+df.to_csv("data/loss.csv", index=False, na_rep="nan")
+```
+
+**Redrawing in LaTeX,** which must work from the `.csv` file alone, with `col sep=comma` on every table:
+
+```latex
+\begin{tikzpicture}
+\begin{axis}[width=\columnwidth, height=4cm, xlabel={Epoch}, ylabel={Loss}]
+  \addplot[ourscolor, mark=*] table[col sep=comma, x=epoch, y=ours] {figures/data/loss.csv};         % curve
+  \addplot[basecolor, only marks] table[col sep=comma, x=epoch, y=baseline] {figures/data/loss.csv}; % scatter
+\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+\begin{axis}[ybar, symbolic x coords={ResNet,ViT-B,Ours}, xtick=data]
+  \addplot[fill=ourscolor] table[col sep=comma, x=method, y=acc] {figures/data/acc.csv};          % bar
+\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+\begin{axis}[colorbar, point meta min=0, point meta max=1]
+  \addplot[matrix plot*, mesh/cols=3, point meta=explicit]                        % heat map, 3 columns
+    table[col sep=comma, x=x, y=y, meta=value] {figures/data/heat.csv};
+\end{axis}
+\end{tikzpicture}
+```
 
 ## Tables
 
@@ -316,14 +436,14 @@ git push origin --tags
 
    ```latex
    \ifdefined\marked
-     \newcommand{\rev}[1]{{\color{metablue}#1}}
+     \newcommand{\rev}[1]{{\color{revcolor}#1}}
    \else
      \newcommand{\rev}[1]{#1}
    \fi
    ```
 
 2. Wrap every changed or added piece of text in `\rev{...}`: sentences, table cells, and figure and table captions. For a new or redrawn figure or table, highlight its caption.
-3. Build the marked version, with changes in `metablue`, as `marked.pdf`:
+3. Build the marked version, with changes in `revcolor`, as `marked.pdf`:
 
    ```bash
    latexmk -pdf -shell-escape -jobname=marked -usepretex='\def\marked{}' main.tex
