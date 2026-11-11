@@ -7,6 +7,7 @@ Agent skills for academic writing — helping researchers write high-quality pap
 - [code-to-method-blueprint](code-to-method-blueprint/) — turn research code into a detailed method blueprint for writing the Method section.
 - [baseline-delta](baseline-delta/) — implement a method as a clean, tested delta (hooks/patches) on a pinned baseline submodule.
 - [latex-paper-writing](latex-paper-writing/) — a standardized workflow for writing papers in LaTeX: project layout, verified references, and figures at exact physical size.
+- [pre-submission-review](pre-submission-review/) — an agentic self-review before submission: format and required statements, novelty search, introduction and contributions, experiments, cross-references, and method clarity.
 
 ## Installation
 
