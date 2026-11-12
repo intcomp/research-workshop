@@ -1,6 +1,6 @@
 ---
 name: pre-submission-review
-description: A pre-submission self-review of an academic paper, run by an agent before the paper is submitted. It checks format and required content (page limit, anonymity, mandatory statements such as AI-use disclosure) against the venue's current call for papers, searches online for existing papers with similar methods to assess novelty, checks that the introduction states a gap in recent methods and that the contributions are precise, judges whether the experiments support every claim and suggests missing analysis experiments, checks cross-references between symbols, figures, tables, equations, and sections, checks that the method section gives every detail of our method and none of standard techniques, and checks that every figure, table, and algorithm sits on or next to the page that first mentions it. Use when a researcher asks to review, self-check, or audit a paper before submission.
+description: An agentic self-review of an academic paper before submission. It checks format and required content (page limit, mandatory statements such as AI-use disclosure) against the venue's current call for papers, checks double-anonymous review for anything that leaks author identity (names, emails, institutes, GitHub links, first-person self-citations), searches online for existing papers with similar methods to assess novelty, checks that the introduction states a gap in recent methods and that the contributions are precise, judges whether the experiments support every claim and suggests missing analysis experiments, checks cross-references of symbols, figures, tables, equations, and sections, checks that the method section gives every detail of our method and none of standard techniques, and checks that every figure, table, and algorithm sits on or next to the page that first mentions it. Use when a researcher asks to review, self-check, or audit a paper before submission.
 ---
 
 # Pre-Submission Review
@@ -23,10 +23,31 @@ Find the target venue's **current** call for papers and author guidelines online
   - a statement on the use of AI tools or LLMs, which many venues now require;
   - limitations, broader impact, ethics, or reproducibility statements;
   - a paper checklist (e.g. NeurIPS).
-- **Anonymity** (for double-blind venues): no author names, affiliations, acknowledgments, identifying links (GitHub, project pages), or first-person self-citations ("our previous work [12]").
+- **Anonymity:** see Double-Anonymous Review.
 - **Compiles cleanly.** No `??` references, undefined citations, overfull boxes that stick into the margin, or missing figures.
 
-## 1. Novelty
+## 1. Double-Anonymous Review
+
+For a double-anonymous (double-blind) venue, nothing in the submission may reveal who the authors are. Follow the venue's anonymity policy, and check the PDF, the LaTeX source, and the supplementary material and code. Every leak is **critical**: it can get the paper desk-rejected.
+
+- **Author information.** No author names, emails, institutes or affiliations, acknowledgments, or funding and grant numbers. The author block shows only the template's anonymous placeholder (e.g. "Anonymous CVPR submission" with the paper ID).
+- **Links.** No GitHub, project page, personal or lab website, Google Drive, Hugging Face, or video links that point to the authors, including usernames inside URLs. If the venue allows it, replace code links with an anonymized repository (e.g. `anonymous.4open.science`).
+- **Self-citations.** Cite our own prior work in the third person, as if someone else wrote it: "Smith et al. [1] showed ...", not "our previous paper [1]", "our earlier work", or "as we showed in [1]". Do not drop the citation to hide it.
+- **Identifying content.** No names of internal datasets, labs, clusters, or company products that point to the authors ("trained on our company's cluster"), and no names, logos, or watermarks in images and screenshots.
+- **Hidden places.**
+  - PDF metadata: the author field set by `hyperref` (`pdfauthor`) or embedded figure PDFs (`pdfinfo main.pdf`, and on each figure);
+  - file paths with usernames (e.g. `/home/<user>/`) in figures, logs, or code;
+  - supplementary code: author headers, license names, absolute paths, and git history.
+
+**How to check.** Read the PDF and search it and the source for leaks, then confirm each hit by reading it in context:
+
+```bash
+pdfinfo main.pdf
+pdftotext main.pdf - | grep -n -i -E 'github|https?://|@|universit|institut|acknowledg|our (previous|prior|earlier) (work|paper)'
+grep -n -i -E '\\thanks|\\author|acknowledg|github|pdfauthor' *.tex
+```
+
+## 2. Novelty
 
 Search online for existing work with a similar method or on the same problem. Use Google Scholar, arXiv, Semantic Scholar, OpenReview, and recent proceedings of the main venues in the field.
 
@@ -36,7 +57,7 @@ Search online for existing work with a similar method or on the same problem. Us
 - Flag any paper whose core idea substantially overlaps ours as a **novelty risk**, and suggest how to differentiate from it (in the text, and with experiments if needed).
 - Never invent a paper. If nothing similar is found, say so and list what was searched.
 
-## 2. Introduction and Contributions
+## 3. Introduction and Contributions
 
 - **Gap in recent methods.** The introduction names concrete, recent existing methods and the specific gap or limitation they share, not only old or straw-man baselines.
 - **How we fill the gap.** It states clearly how the proposed method addresses that gap, and why it works.
@@ -45,7 +66,7 @@ Search online for existing work with a similar method or on the same problem. Us
   - each is actually supported by the method or experiments;
   - nothing is overclaimed (e.g. "first" or "state of the art" without evidence).
 
-## 3. Experiments
+## 4. Experiments
 
 Check that the experiments are sufficient and that every claim in the paper is supported by evidence.
 
@@ -59,7 +80,7 @@ Check that the experiments are sufficient and that every claim in the paper is s
   - cost: parameters, FLOPs, memory, runtime.
 - **Suggest experiments.** Propose concrete additional experiments that would make the paper more convincing, with what each would show and which claim it supports, ordered by priority.
 
-## 4. Cross-References and Notation
+## 5. Cross-References and Notation
 
 Every element that can be cross-referenced or annotated should be. To the reader, each reference is a reminder and a quick review that reinforces what they have read.
 
@@ -68,12 +89,12 @@ Every element that can be cross-referenced or annotated should be. To the reader
 - **Sections, equations, figures, and tables.** Wherever the text refers back to something, it cites it with `\ref`/`\eqref`: "the loss in Eq. (3)", "the module in Sec. 3.2", "as shown in Fig. 2". Flag references written as plain text ("the loss above", "the previous section") that could be cross-referenced.
 - Every figure and table is referenced in the text.
 
-## 5. Method Clarity
+## 6. Method Clarity
 
 - **Our method in full.** Every process and detail specific to our method is explained: inputs and outputs, each component, how they connect, the losses, and the training and inference procedures. A reader should be able to reimplement it. Flag missing details.
 - **Standard techniques omitted.** Details unrelated to our method's contribution are left out or replaced by a citation, e.g. how to compute self-attention, or a standard backbone or optimizer. Flag such passages as candidates to cut.
 
-## 6. Figure, Table, and Algorithm Placement
+## 7. Figure, Table, and Algorithm Placement
 
 Readers should never have to flip pages to find a float. Check every figure, table, and algorithm in the compiled PDF.
 
@@ -94,9 +115,9 @@ Readers should never have to flip pages to find a float. Check every figure, tab
 
 ## Report
 
-Write the review as a Markdown report with one section per check (0–6). Within each section:
+Write the review as a Markdown report with one section per check (0–7). Within each section:
 
-- list findings by severity: **critical** (could cause rejection, e.g. over the page limit, missing required statement, novelty risk, unsupported main claim), **major**, then **minor**;
+- list findings by severity: **critical** (could cause rejection, e.g. over the page limit, missing required statement, an identity leak, novelty risk, unsupported main claim), **major**, then **minor**;
 - give each finding its location, the problem, and a concrete fix;
 - include links for every venue rule and related paper.
 
