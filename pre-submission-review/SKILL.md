@@ -1,6 +1,6 @@
 ---
 name: pre-submission-review
-description: An agentic self-review of an academic paper before submission. It checks format and required content (page limit, mandatory statements such as AI-use disclosure) against the venue's current call for papers, checks double-anonymous review for anything that leaks author identity (names, emails, institutes, GitHub links, first-person self-citations), searches online for existing papers with similar methods to assess novelty, checks that the introduction states a gap in recent methods and that the contributions are precise, judges whether the experiments support every claim and suggests missing analysis experiments, checks cross-references of symbols, figures, tables, equations, and sections, checks that the method section gives every detail of our method and none of standard techniques, and checks that every figure, table, and algorithm sits on or next to the page that first mentions it. Use when a researcher asks to review, self-check, or audit a paper before submission.
+description: An agentic self-review of an academic paper before submission. It checks format and required content (page limit, mandatory statements such as AI-use disclosure) against the venue's current call for papers, checks double-anonymous review for anything that leaks author identity (names, emails, institutes, GitHub links, first-person self-citations), searches online for similar existing papers to assess novelty, checks that the introduction states a gap in recent methods and that the contributions are precise, checks that experiments support every claim and suggests missing ones, checks cross-references of symbols, figures, tables, equations, and sections, checks that the method section gives every detail of our method and none of standard techniques, and checks that every figure, table, and algorithm sits on or next to the page that first mentions it, and replaces arXiv references with published versions. Use when a researcher asks to review, self-check, or audit a paper before submission.
 ---
 
 # Pre-Submission Review
@@ -86,7 +86,7 @@ Every element that can be cross-referenced or annotated should be. To the reader
 
 - **Symbols in figures and tables.** If a concept shown in a figure or table has a math symbol defined in the text, the figure, table, or its caption shows that symbol too. E.g. a block for the gating module in the method figure is labeled with its symbol $g_\phi$, and an ablation table on the loss weight writes $\lambda$.
 - **Symbols in the text.** When the text discusses a concept that has a symbol, it gives the symbol: "the loss weight $\lambda$", not just "the loss weight".
-- **Sections, equations, figures, and tables.** Wherever the text refers back to something, it cites it with `\ref`/`\eqref`: "the loss in Eq. (3)", "the module in Sec. 3.2", "as shown in Fig. 2". Flag references written as plain text ("the loss above", "the previous section") that could be cross-referenced.
+- **Sections, equations, figures, and tables.** Wherever the text refers back to something, it cites it with cleveref's `\cref`: "the loss in Eq. (3)", "the module in Sec. 3.2", "as shown in Fig. 2". Flag references written as plain text ("the loss above", "the previous section") that could be cross-referenced.
 - Every figure and table is referenced in the text.
 
 ## 6. Method Clarity
@@ -113,9 +113,21 @@ Readers should never have to flip pages to find a float. Check every figure, tab
 
 **Fixing.** Move the float's source in `main.tex` next to the paragraph that first mentions it (one page earlier for `figure*`), or change its placement option. Do not fix placement with `\vspace` hacks or by shrinking the float.
 
+## 8. References: Published Versions over arXiv
+
+Avoid citing arXiv preprints. Every reference should point to a published, peer-reviewed version.
+
+1. **Find every preprint entry** in the `.bib` files: `journal = {arXiv preprint arXiv:...}`, `eprint` with `archivePrefix = {arXiv}`, `CoRR`, and other preprint servers (bioRxiv, SSRN, ...).
+2. **Look for its published version** online (DBLP, Semantic Scholar, Google Scholar, OpenReview, the publisher). The published version may have a different title or a different author order, so search by authors and topic too, not only by the exact title.
+3. **If it is published,** cite the published version, with its venue, year, and pages taken from an official BibTeX source.
+4. **If it is not published,** look for a similar published paper that supports the same point, and cite that instead.
+5. **Keep the arXiv citation only as a last resort:** when there is no published version or alternative, and the paper cannot go uncited (e.g. a very recent method we compare against or build on). Report each one kept, with the reason.
+
+Report every preprint entry in a table: its key, the published version or alternative found (with link), and the action (replace, substitute, or keep with reason). When fixing, follow the reference rules of the `latex-paper-writing` skill.
+
 ## Report
 
-Write the review as a Markdown report with one section per check (0–7). Within each section:
+Write the review as a Markdown report with one section per check (0–8). Within each section:
 
 - list findings by severity: **critical** (could cause rejection, e.g. over the page limit, missing required statement, an identity leak, novelty risk, unsupported main claim), **major**, then **minor**;
 - give each finding its location, the problem, and a concrete fix;

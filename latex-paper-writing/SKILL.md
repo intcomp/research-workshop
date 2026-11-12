@@ -88,6 +88,7 @@ All shared LaTeX setup lives in one file, `preamble.tex`: packages, the color th
 \usepackage{pgfplots}     % redraw figures from their .csv files
 \pgfplotsset{compat=1.18}
 \usepackage{gradbars}   % compact bars and sparklines in tables and text
+\usepackage[capitalize]{cleveref}  % cross-references; load after hyperref
 
 % ---- color theme (see Theme and Colors) ----
 \definecolor{ourscolor}{HTML}{0866FF}   % our method
@@ -148,6 +149,32 @@ On ImageNet, it reduces FLOPs by 40\% with less than 0.5\% accuracy drop.
 %
 
 Our contributions are as follows.
+%
+```
+
+## Cross-References
+
+**Rule:** use cleveref (`\cref`, or `\Cref` at the start of a sentence) for cross-references.
+
+## Experiment Write-up
+
+**Rule:** every experiment subsection has at least two paragraphs.
+
+1. **Why and how.**
+   - **Why:** what the experiment verifies, tied to a specific design of our method. E.g. if a component is meant to improve accuracy, start with "To verify that our X improves the accuracy of Y, we ...". This is required for ablations and analysis experiments. It is optional for the main results, since comparing overall performance needs no justification.
+   - **How:** the data and settings: what is compared or varied, and the details needed to understand the result.
+2. **Results.** What the results show, pointing to the table or figure: "As shown in \cref{tab:gate}, ...", "As demonstrated in \cref{fig:attn}, ...".
+
+```latex
+\subsection{Effect of Gated Fusion}
+To verify that the gated fusion in \cref{sec:gate} improves the accuracy on small objects,
+we compare it with plain addition and concatenation on COCO \texttt{val}.
+%
+All variants use the same backbone and training schedule, and we report AP on small objects (AP$_S$).
+%
+
+As shown in \cref{tab:gate}, gated fusion improves AP$_S$ by 2.1 points over plain addition,
+while the overall AP changes by less than 0.3.
 %
 ```
 
@@ -466,7 +493,7 @@ Write the response with the [TempLaTeX response template](https://github.com/int
 - **State the revision.** If the manuscript was revised because of a sub-comment, end its response with an explicit, highlighted sentence that says where and what changed, referenced by label:
 
   ```latex
-  \rev{We have revised Section~\ref{M-sec:experiments} of the revised manuscript
+  \rev{We have revised \cref{M-sec:experiments} of the revised manuscript
   to add the comparison with X that the reviewer requested.}
   ```
 
@@ -490,9 +517,10 @@ Write the response with the [TempLaTeX response template](https://github.com/int
   ```latex
   \usepackage{xr-hyper}        % in response.tex; use xr if hyperref is not loaded
   \usepackage{hyperref}
+  \usepackage[capitalize]{cleveref}  % same names as in the paper's preamble
   \externaldocument[M-]{main}  % reads main.aux; prefix M- avoids label clashes
   ...
-  As shown in Table~\ref{M-tab:ablation} of the revised manuscript, ...
+  As shown in \cref{M-tab:ablation} of the revised manuscript, ...
   ```
 
   Compile the manuscript first, because `\externaldocument` reads its `.aux` file. Rebuild the response after every manuscript change.
