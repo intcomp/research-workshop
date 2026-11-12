@@ -1,6 +1,6 @@
 ---
 name: latex-paper-writing
-description: A standardized workflow for writing academic papers in LaTeX, covering project layout, the shared preamble (packages, color theme, math macros), references, figures, and tables. AI-added BibTeX entries go only into bib/ai.bib, each annotated with its online source and a summary, never written from memory. Figures are plotted in figures/figures.ipynb at the template's exact physical width with LaTeX-rendered text and theme colors, with unified font sizes and every plot's data saved as a TikZ-ready .csv file in figures/data/. Tables are fitted by editing content and spacing, with resizebox only as a last resort. Use whenever writing or editing a LaTeX paper, adding citations or .bib entries, or creating figures or tables for a paper.
+description: A standardized workflow for writing academic papers in LaTeX, covering project layout, the shared preamble (packages, color theme, math macros), references, figures, and tables. AI-added BibTeX entries go only into bib/ai.bib, each annotated with its online source and a summary, never written from memory. Figures are plotted in figures/figures.ipynb or drawn in TikZ at the template's exact physical width with LaTeX-rendered text and theme colors, with unified font sizes and every plot's data saved as a TikZ-ready .csv file in figures/data/. Tables are fitted by editing content and spacing, with resizebox only as a last resort. Use whenever writing or editing a LaTeX paper, adding citations or .bib entries, or creating figures or tables for a paper.
 ---
 
 # LaTeX Paper Writing
@@ -18,13 +18,13 @@ paper/
 │   └── ai.bib            # entries added by AI only
 ├── figures/
 │   ├── figures.ipynb     # all plotting code
-│   ├── <name>.tex        # one TikZ figure per file (e.g. teaser.tex), \input by main.tex
+│   ├── <name>.tikz       # TikZ figures (e.g. teaser.tikz), \input by main.tex
 │   ├── data/             # plotted values, one <name>.csv per figure
 │   └── <name>-crop.pdf   # cropped figures, included in the paper
 └── references/            # LaTeX sources of exemplar papers, read-only
 ```
 
-**Rule: all text stays in `main.tex`.** Never split sections (introduction, method, experiments, appendix, ...) into separate `.tex` files. The only `.tex` files besides `main.tex` are `preamble.tex` and one file per TikZ figure in `figures/`. (The rebuttal `response.tex` is a separate document, not part of the paper.)
+**Rule: all text stays in `main.tex`.** Never split sections (introduction, method, experiments, appendix, ...) into separate `.tex` files. The only other source files are `preamble.tex` and the `.tikz` figures in `figures/`. (The rebuttal `response.tex` is a separate document, not part of the paper.)
 
 When a figure is split out, only its drawing goes into the figure file. The `figure` environment, `\centering`, `\caption`, and `\label` all stay in `main.tex`:
 
@@ -32,14 +32,14 @@ When a figure is split out, only its drawing goes into the figure file. The `fig
 % main.tex
 \begin{figure}[t]
   \centering
-  \input{figures/teaser}   % only the drawing
+  \input{figures/teaser.tikz}   % only the drawing
   \caption{Overview of our method. ...}
   \label{fig:teaser}
 \end{figure}
 ```
 
 ```latex
-% figures/teaser.tex: just the tikzpicture, no figure environment, caption, or label
+% figures/teaser.tikz: just the tikzpicture, no figure environment, caption, or label
 \begin{tikzpicture}
   ...
 \end{tikzpicture}
@@ -244,8 +244,9 @@ The whole paper follows one **color coding**: a single theme in which each color
 **Rules:**
 
 - All figure files live in `figures/`.
-- **One figure, one file, at most two layers.** This applies to every figure, not just the teaser. Each TikZ figure (diagram, teaser, pgfplots plot) is one file, `figures/<name>.tex`, containing only the `tikzpicture`, and `main.tex` simply `\input`s it inside a `figure` environment that keeps the caption and label (see Project Layout). Never nest deeper:
-  - a figure file must not `\input` or `\include` further `.tex` files;
+- Figures can be plotted with Python or drawn with TikZ (one `figures/<name>.tikz` per figure).
+- **One figure, one file, at most two layers.** This applies to every figure, not just the teaser. Each TikZ figure (diagram, teaser, pgfplots plot) is one file, `figures/<name>.tikz`, containing only the `tikzpicture`, and `main.tex` simply `\input`s it inside a `figure` environment that keeps the caption and label (see Project Layout). Never nest deeper:
+  - a figure file must not `\input` or `\include` other files;
   - do not put a `tikzpicture` inside a node of another `tikzpicture`; use `scope` or `pic` instead.
 - If figures are plotted with Python, all plotting code goes in a single notebook, `figures/figures.ipynb`.
 - Its first cell sets the fonts, renders all text with LaTeX, and defines the physical figure widths.
@@ -331,7 +332,7 @@ The teaser illustrates the overall framework and pipeline of the method.
 
 1. **Read the paper first.** Read the abstract, introduction, and method section, and the code if there is any, to understand the method's pipeline.
 2. **Draw the pipeline with TikZ.**
-   - Write it in `figures/teaser.tex` and `\input{figures/teaser}` in `main.tex`, following the one-file, two-layer rule in Figures.
+   - Write it in `figures/teaser.tikz` and `\input{figures/teaser.tikz}` in `main.tex`, following the one-file, two-layer rule in Figures.
    - Load TikZ libraries in `preamble.tex`, use the theme color names, and write math with the macros from `preamble.tex`.
    - Size it to `\columnwidth` or `\textwidth` through node and picture dimensions, not `\resizebox` or `scale`, which change the font size.
    - Place example images with `\node {\includegraphics[...]{...}};`.
