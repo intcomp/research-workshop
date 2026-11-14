@@ -1,6 +1,6 @@
 ---
 name: pre-submission-review
-description: An agentic self-review of an academic paper before submission. It checks format and required content (page limit, mandatory statements such as AI-use disclosure) against the venue's current call for papers, checks double-anonymous review for anything that leaks author identity (names, emails, institutes, GitHub links, first-person self-citations), searches online for similar existing papers to assess novelty, checks that the introduction states a gap in recent methods and that the contributions are precise, checks that experiments support every claim and suggests missing ones, checks cross-references of symbols, figures, tables, equations, and sections, checks that the method section gives every detail of our method and none of standard techniques, and checks that every figure, table, and algorithm sits on or next to the page that first mentions it, and replaces arXiv references with published versions. Use when a researcher asks to review, self-check, or audit a paper before submission.
+description: An agentic self-review of an academic paper before submission. It checks format, page limit, and required statements (e.g. AI-use disclosure) against the venue's current call for papers; double-anonymous review leaks (names, emails, institutes, GitHub links, first-person self-citations); novelty, by searching online for similar papers; whether the introduction states a gap in recent methods and the contributions are precise; whether experiments support every claim, suggesting missing ones; cross-references of symbols, figures, tables, equations, and sections; method clarity; that every float sits near its first mention; that arXiv references are replaced by published versions; and that the same result is reported with the same number everywhere. Use when a researcher asks to review, self-check, or audit a paper before submission.
 ---
 
 # Pre-Submission Review
@@ -125,11 +125,26 @@ Avoid citing arXiv preprints. Every reference should point to a published, peer-
 
 Report every preprint entry in a table: its key, the published version or alternative found (with link), and the action (replace, substitute, or keep with reason). When fixing, follow the reference rules of the `latex-paper-writing` skill.
 
+## 9. Number Consistency
+
+The same result often appears in several places: the full model's result in the main table and again as a row of the ablation table, a baseline in two tables, a number in a figure and in the text. These must be identical. Inconsistent numbers can make reviewers suspect fabricated or misused data, which is extremely serious. Every unexplained mismatch is **critical**.
+
+1. **Build an inventory** of every reported number with its setting: method, dataset and split, metric, backbone, and training setup. Include tables, figures (their data in `figures/data/`), the text, the abstract, and the introduction.
+2. **Group numbers by identical setting,** and check each group has the same value, with the same rounding and precision.
+3. **Check derived numbers:**
+   - improvements quoted in the text ("+2.1 AP", "reduces FLOPs by 40\%") equal the difference computed from the tables, and say whether they are absolute or relative;
+   - average columns equal the mean of their rows;
+   - bold and underlined entries really are the best and second best.
+4. **Check baselines:** the same baseline has the same numbers in every table. Numbers copied from the original paper and numbers we re-ran are not mixed silently; mark them (e.g. with $\dagger$) and say so in the caption.
+5. **Legitimate differences must be stated.** If two numbers differ because the settings differ (e.g. the ablation uses a shorter schedule or a subset), the caption or text says so explicitly. Otherwise, treat it as a mismatch.
+
+Report each mismatch with every location where the number appears, the values found, and which one is correct, if that can be determined from the code, logs, or data files.
+
 ## Report
 
-Write the review as a Markdown report with one section per check (0–8). Within each section:
+Write the review as a Markdown report with one section per check (0–9). Within each section:
 
-- list findings by severity: **critical** (could cause rejection, e.g. over the page limit, missing required statement, an identity leak, novelty risk, unsupported main claim), **major**, then **minor**;
+- list findings by severity: **critical** (could cause rejection, e.g. over the page limit, missing required statement, an identity leak, inconsistent numbers, novelty risk, unsupported main claim), **major**, then **minor**;
 - give each finding its location, the problem, and a concrete fix;
 - include links for every venue rule and related paper.
 
