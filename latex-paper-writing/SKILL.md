@@ -71,14 +71,14 @@ All shared LaTeX setup lives in one file, `preamble.tex`: packages, the color th
 
 - **One home for setup:** no `\usepackage`, `\definecolor`, or `\newcommand` anywhere else in the paper.
 - **Template first:** do not reload packages the template already loads with different options, and do not override its layout (margins, fonts, spacing). Leave template-specific settings in `main.tex`.
-- **Notation as macros:** every recurring math symbol is a macro, so notation is defined once and can be changed in one place.
+- **Notation as macros:** every math symbol of the paper is a macro in the math notation block, so notation is defined once and can be changed in one place (see Math Notation).
   - Use `\newcommand`, never `\def`, so a name clash is an error rather than a silent override.
   - Use `\DeclareMathOperator` for operators.
-  - Do not hand-type a symbol in the text if a macro exists for it.
 
 ```latex
 % ---- packages ----
 \usepackage{amsmath,amssymb}
+\usepackage{bm}           % bold italic vectors and matrices, incl. Greek
 \usepackage{graphicx}
 \usepackage{overpic}    % LaTeX labels and math on top of images
 \usepackage{xcolor}
@@ -94,38 +94,38 @@ All shared LaTeX setup lives in one file, `preamble.tex`: packages, the color th
 \definecolor{ourscolor}{HTML}{0866FF}   % our method
 % ...
 
-% ---- math notation ----
-\newcommand{\R}{\mathbb{R}}             % real numbers
-\newcommand{\E}{\mathbb{E}}             % expectation
-\newcommand{\vx}{\mathbf{x}}            % input vector
-\newcommand{\loss}{\mathcal{L}}         % loss
+% ---- math notation: every symbol is defined here, and only here (keep this block last) ----
+\newcommand{\R}{\mathbb{R}}                    % real numbers
+\newcommand{\vx}{\bm{x}}                       % input vector, \R^{D}
+\newcommand{\mW}{\bm{W}}                       % weight matrix, \R^{D \times D}
+\newcommand{\sD}{\mathcal{D}}                  % training set
+\newcommand{\Lcls}{\mathcal{L}_{\text{cls}}}   % classification loss
 \DeclareMathOperator*{\argmin}{arg\,min}
-\DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator{\softmax}{softmax}
-\DeclareMathOperator{\diag}{diag}
 ```
 
 ## Math Notation
 
-**Rule:** math fonts and symbols must be professional and follow the field's conventions, so readers recognize each kind of object at a glance. When in doubt, follow the conventions in Goodfellow et al., *Deep Learning*, and the ICLR `math_commands.tex`.
+**Rule:** notation is as rigorous as in a linear algebra textbook, following ISO 80000-2 and the ICLR `math_commands.tex`.
 
-| Object | Style | Example |
+- **One definition per symbol.** Every math symbol is a macro in `preamble.tex`, with its meaning and shape in a comment. Never define or redefine a symbol anywhere else.
+- **Use the macro everywhere:** text, equations, tables, and figures (matplotlib loads the same macros). Never hand-type `\bm{W}` where `\mW` exists.
+- **One symbol, one meaning,** and one quantity, one symbol.
+
+| Object | Typeface | Example |
 |---|---|---|
-| Scalar | italic lowercase (Greek for hyperparameters) | $x$, $\lambda$, $\eta$ |
-| Count, dimension, index range | italic uppercase / lowercase index | $N$, $D$, $L$; $i = 1, \dots, N$ |
-| Vector | bold lowercase | `\mathbf{x}`, `\boldsymbol{\mu}` |
-| Matrix | bold uppercase | `\mathbf{W}` |
-| Tensor (3+ dims) | bold sans-serif uppercase | `\mathsf{\mathbf{X}}` |
-| Set, dataset | calligraphic uppercase | `\mathcal{D}`, `\mathcal{X}` |
-| Loss | calligraphic L | `\mathcal{L}`, `\mathcal{L}_{\text{cls}}` |
-| Number sets, expectation | blackboard bold | `\mathbb{R}^{N \times D}`, `\mathbb{E}` |
-| Function, network | italic, parameters as subscript | $f_\theta$, $g_\phi$ |
-| Named operator | upright, via `\DeclareMathOperator` | `\softmax`, `\argmin`, `\diag` |
-| Transpose, norm | `^\top`, `\lVert \cdot \rVert` | `\mathbf{W}^\top`, `\lVert \mathbf{x} \rVert_2` |
+| Scalar | italic | $x$, $N$, $\lambda$ |
+| Vector | bold italic lowercase | `\bm{x}`, `\bm{\mu}` |
+| Matrix | bold italic uppercase | `\bm{W}` |
+| Element of a vector or matrix | italic, not bold | $x_i$, $W_{ij}$ |
+| Set, dataset | calligraphic | `\mathcal{D}` |
+| Number set | blackboard bold | `\mathbb{R}^{N \times D}` |
+| Operator | upright | `\softmax`, `\log` |
+| Transpose | `^\top` | `\mW^\top`, never `\mW^T` |
 
-- Word subscripts are upright: write `\mathcal{L}_{\text{cls}}`, not `\mathcal{L}_{cls}`.
-- One symbol, one meaning across the whole paper. Never reuse a symbol for something else in another section.
-- Define every symbol at its first use, and write symbols through the macros in `preamble.tex`.
+- Use `\bm`, not `\mathbf`: `\mathbf{\mu}` is not bold.
+- Word subscripts are upright: `\mathcal{L}_{\text{cls}}`, not `\mathcal{L}_{cls}`.
+- Never resize math by hand (`\small`, `\scriptstyle`).
 
 **Use the symbols throughout the paper.** Once the method defines a symbol, refer to it wherever its value or role comes up, so readers can connect the text to the method. For example, if the method defines the number of layers $L$, the experiments should say: "We use ViT-B with 12 layers ($L = 12$)." Likewise, write "the loss weight $\lambda$ in Eq. (3) is set to 0.1", not just "the loss weight is 0.1".
 
@@ -156,7 +156,27 @@ Our contributions are as follows.
 
 **Rule:** use cleveref (`\cref`, or `\Cref` at the start of a sentence) for cross-references.
 
-## Experiment Write-up
+## Experiments
+
+### Thorough, Method-Specific Analysis
+
+**Rule:** experiments must be thorough. End-to-end comparisons with the state of the art are necessary but not enough. More important are analytical, targeted experiments on what is specific to our method: they probe its behaviour from different angles, and use the results to verify and explain that behaviour.
+
+1. **List the method's specific behaviours.** From the method section, write down what each key design is supposed to do and why it should work (e.g. "the gate suppresses background tokens", "the auxiliary loss makes features more separable").
+2. **Design an experiment for each,** that tests whether the behaviour really happens and explains the result.
+3. **Look from several angles,** for example:
+   - **Ablations:** remove or replace each component, and compare with alternative designs for it.
+   - **Probing internal behaviour:** visualize or measure intermediate quantities (attention maps, gate values, learned weights, feature statistics) across layers, training steps, or inputs, and check they behave as the method claims.
+   - **Varying conditions:** model size, data size, resolution or sequence length, difficulty levels, and distribution shift. Show where the method helps most and why.
+   - **Sensitivity:** to key hyperparameters.
+   - **Cost:** parameters, FLOPs, memory, and runtime, and the accuracy–efficiency trade-off.
+   - **Generality:** other backbones, datasets, or tasks, or plugged into other methods.
+   - **Qualitative results:** representative examples next to the baselines.
+   - **Failure cases:** where the method does not help, and why.
+   - **Theory and practice:** if the method makes a theoretical claim, check it empirically.
+4. **Report reliably:** run several seeds for small differences, and report mean and standard deviation.
+
+### Write-up
 
 **Rule:** every experiment subsection has at least two paragraphs.
 
@@ -283,6 +303,9 @@ COLORS = {
     )
 }  # usage: ax.plot(x, y, color=COLORS["ourscolor"], label="Ours")
 
+# ---- math notation: the same macros as the paper, e.g. ax.set_ylabel(r"$\Lcls$") ----
+MATH_MACROS = Path("../preamble.tex").read_text().split("% ---- math notation")[1]
+
 # ---- CVPR two-column layout (measured from the compiled paper) ----
 # \columnwidth = 237.13594pt, \textwidth = 496.85625pt; 1in = 72.27 TeX pt
 COLUMN_WIDTH = 237.13594 / 72.27   # 3.281 in, single-column figure
@@ -295,7 +318,8 @@ plt.rcParams.update({
     "text.usetex": True,
     "font.family": "serif",
     # match the paper's fonts (CVPR uses Times)
-    "text.latex.preamble": r"\usepackage{amsmath}\usepackage{newtxtext,newtxmath}",
+    "text.latex.preamble": r"\usepackage{amsmath}\usepackage{newtxtext,newtxmath}\usepackage{bm}"
+                           + "\n% ---- math notation" + MATH_MACROS,
     # every text element uses one of the two sizes
     "font.size": FONTSIZE,
     "axes.labelsize": FONTSIZE,
