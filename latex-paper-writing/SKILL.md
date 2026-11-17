@@ -178,15 +178,22 @@ Our contributions are as follows.
 
 ### Write-up
 
-**Rule:** every experiment subsection has at least two paragraphs.
+**Rule:** every individual experiment starts with `\paragraph{<name>.}`, and its description follows one fixed format.
 
-1. **Why and how.**
-   - **Why:** what the experiment verifies, tied to a specific design of our method. E.g. if a component is meant to improve accuracy, start with "To verify that our X improves the accuracy of Y, we ...". This is required for ablations and analysis experiments. It is optional for the main results, since comparing overall performance needs no justification.
-   - **How:** the data and settings: what is compared or varied, and the details needed to understand the result.
-2. **Results.** What the results show, pointing to the table or figure: "As shown in \cref{tab:gate}, ...", "As demonstrated in \cref{fig:attn}, ...".
+- **One `\paragraph` per experiment.** Use it for every small experiment in the experiments section: no `\subsubsection`, and no run-in `\textbf{Results on MM-Vet.}` headings. Replace all of them with `\paragraph`.
+- **Descriptive, direct names** that say what the experiment is about, e.g. `\paragraph{Gated fusion vs. simple fusion.}`, not `\paragraph{Analysis.}`.
+
+Each experiment follows this order:
+
+1. **Why:** the purpose, i.e. what the experiment verifies, e.g. "To verify that our X improves Y, we ...". It is optional for the main results, since comparing overall performance needs no justification.
+2. **What and how:** what we did and how: the data and settings, and what is compared. Explain complex settings in full.
+3. **Results,** in a new paragraph: what the numbers show, pointing to the table or figure ("As shown in \cref{tab:gate}, ...").
+4. **Analysis and conclusion:** what the results imply. A conclusion is not "X is 2.1 points higher than Y"; that is a number. It is what the numbers mean, e.g. "X is better suited to Y", or a hypothesis that explains them, stated as a hypothesis.
+
+Steps 1–2 form the first paragraph. The results and analysis can be as long as needed, over several paragraphs, as long as they follow this order.
 
 ```latex
-\subsection{Effect of Gated Fusion}
+\paragraph{Gated fusion vs. simple fusion.}
 To verify that the gated fusion in \cref{sec:gate} improves the accuracy on small objects,
 we compare it with plain addition and concatenation on COCO \texttt{val}.
 %
@@ -195,6 +202,10 @@ All variants use the same backbone and training schedule, and we report AP on sm
 
 As shown in \cref{tab:gate}, gated fusion improves AP$_S$ by 2.1 points over plain addition,
 while the overall AP changes by less than 0.3.
+%
+This indicates that the gate mainly helps where fine details are easily drowned out by the background.
+%
+We conjecture that the gate learns to suppress background features that dominate small objects.
 %
 ```
 
